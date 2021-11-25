@@ -1,4 +1,6 @@
 {
     "editor.formatOnSave": true,
-    "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix"
+    "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
+    "haskell.trace.client": "debug",
+    "haskell.trace.server": "messages"
 }
