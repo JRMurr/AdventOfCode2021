@@ -14,3 +14,6 @@ part2 = do
   input <- readInput $ getInputFile $__FILE__
   putStrLn "part2"
   return ()
+
+dispatch :: [(Int, IO ())]
+dispatch = [(1, part1), (2, part2)]

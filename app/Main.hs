@@ -1,14 +1,17 @@
 module Main where
 
 -- need to update other-modules to add sub modules
-import Day01.Mod (part1, part2)
+import qualified Day01.Mod as Day01 (dispatch)
 import System.Environment (getArgs)
 
-dispatch :: [(String, IO ())]
-dispatch = [("part1", part1), ("part2", part2)]
+type DayDispatcher = [(Int, IO ())]
+
+dayMap :: [(Int, DayDispatcher)]
+dayMap = [(1, Day01.dispatch)]
 
 main :: IO ()
 main = do
-  func_name <- getArgs
-  let (Just func) = lookup (head func_name) dispatch
+  [dayNumber, part] <- getArgs
+  let (Just dayDispatcher) = lookup (read dayNumber) dayMap
+  let (Just func) = lookup (read part) dayDispatcher
   func
