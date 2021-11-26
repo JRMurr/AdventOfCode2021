@@ -1,7 +1,16 @@
 module Day01.Mod where
 
-tmp :: IO ()
-tmp = putStrLn "tmp"
+import PseudoMacros (__FILE__)
+import Utils.Mod (getInputFile, readInput)
 
-tmp2 :: [Char]
-tmp2 = "tmp2"
+part1 :: IO ()
+part1 = do
+  input <- readInput $ getInputFile $__FILE__
+  putStrLn "part1"
+  return ()
+
+part2 :: IO ()
+part2 = do
+  input <- readInput $ getInputFile $__FILE__
+  putStrLn "part2"
+  return ()

@@ -25,11 +25,20 @@ executable adventOfCode2021
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: 
+    other-modules:
+        Utils.Mod
         Day01.Mod
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
-    build-depends:    base ^>=4.14.1.0
+    build-depends:
+        base ^>=4.14.1.0,
+        split >= 0.2,
+        pseudomacros >= 0.0.2,
+        filepath >= 1.4.0
     hs-source-dirs:   app
     default-language: Haskell2010
+    default-extensions: 
+        TemplateHaskell
+    ghc-options:
+        -haddock
