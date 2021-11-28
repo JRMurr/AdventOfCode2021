@@ -14,6 +14,11 @@ set -l dayStr Day$day
 # easy way to remove starting 0 if needed
 set -l dayNum (math $day)
 
+if test -d ./app/$dayStr
+    echo "Day already exists"
+    exit 1
+end
+
 cp -r ./_dayTemplate ./app/$dayStr
 
 sed -i "s/DayXX/$dayStr/" ./app/$dayStr/Mod.hs
