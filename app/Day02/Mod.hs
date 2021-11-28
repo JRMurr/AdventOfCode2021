@@ -1,4 +1,4 @@
-module DayXX.Mod where
+module Day02.Mod where
 
 import PseudoMacros (__FILE__)
 import Utils.Mod (getInputFile, readInput)

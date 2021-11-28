@@ -2,5 +2,8 @@
     "editor.formatOnSave": true,
     "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
     "haskell.trace.client": "debug",
-    "haskell.trace.server": "messages"
+    "haskell.trace.server": "messages",
+    "files.exclude": {
+        "_dayTemplate": true
+    }
 }
