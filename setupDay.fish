@@ -25,8 +25,8 @@ sed -i "s/DayXX/$dayStr/" ./app/$dayStr/Mod.hs
 
 sed -i "s/other-modules:/other-modules:\n        $dayStr.Mod/" ./adventOfCode2021.cabal
 
-sed -i "s/-- Add day import/import qualified $dayStr.Mod as $dayStr (dispatch)\n-- Add day import\n/" ./app/Main.hs
+sed -i "s/-- Add day import/import qualified $dayStr.Mod as $dayStr (dispatch)\n-- Add day import/" ./app/Main.hs
 
-sed -i "s/-- Add day dispatch/,($dayNum, $dayStr.dispatch)\n    -- Add day dispatch\n/" ./app/Main.hs
+sed -i "s/-- Add day dispatch/,($dayNum, $dayStr.dispatch)\n    -- Add day dispatch/" ./app/Main.hs
 
 echo format Main.hs
