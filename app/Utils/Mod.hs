@@ -11,6 +11,9 @@ import Text.Megaparsec.Error (errorBundlePretty)
 readInputLines :: FilePath -> IO [String]
 readInputLines filename = lines <$> readFile filename
 
+readInputLinesInteger :: FilePath -> IO [Integer]
+readInputLinesInteger filename = map read . lines <$> readFile filename
+
 -- | Given a source file path, get the `in` file in that directory
 getInputFile :: FilePath -> FilePath
 getInputFile sourceFilePath = combine (takeDirectory sourceFilePath) "in"

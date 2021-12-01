@@ -6,13 +6,13 @@ import Utils.Mod
 part1 :: IO ()
 part1 = do
   input <- readInputLines $ getInputFile $__FILE__
-  putStrLn "part1"
+  print "part1"
   return ()
 
 part2 :: IO ()
 part2 = do
   input <- readInputLines $ getInputFile $__FILE__
-  putStrLn "part2"
+  print "part2"
   return ()
 
 dispatch :: [(Int, IO ())]

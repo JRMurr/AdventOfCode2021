@@ -5,5 +5,8 @@
     "haskell.trace.server": "messages",
     "files.exclude": {
         "_dayTemplate": true
-    }
+    },
+    "cSpell.words": [
+        "Thruple"
+    ]
 }
