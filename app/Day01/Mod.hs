@@ -1,6 +1,5 @@
 module Day01.Mod where
 
-import PseudoMacros (__FILE__)
 import Utils.Mod
 
 -- Get all pairs of elements in a sliding window
@@ -27,7 +26,7 @@ partition' size offset
 
 part1 :: IO ()
 part1 = do
-  input <- readInputLinesInteger $ getInputFile $__FILE__
+  input <- readInputLinesInteger
   let paired = pairs input
   print $ count (\(a, b) -> b > a) paired
   return ()
@@ -41,7 +40,7 @@ threeSum (a, b, c) = a + b + c
 
 part2 :: IO ()
 part2 = do
-  input <- readInputLinesInteger $ getInputFile $__FILE__
+  input <- readInputLinesInteger
   let threes = map toThruple $ partition' 3 1 input
   print $ count (\(a, b) -> threeSum b > threeSum a) (pairs threes)
   return ()

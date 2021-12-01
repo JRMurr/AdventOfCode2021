@@ -18,7 +18,7 @@ dayMap =
 
 main :: IO ()
 main = do
-  [dayNumber, part] <- getArgs
-  let (Just dayDispatcher) = lookup (read dayNumber) dayMap
+  day : part : _ <- getArgs
+  let (Just dayDispatcher) = lookup (read day) dayMap
   let (Just func) = lookup (read part) dayDispatcher
   func

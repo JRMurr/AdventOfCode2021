@@ -2,28 +2,55 @@ module Utils.Mod where
 
 import Data.List
 import Data.Void
-import System.FilePath (combine, takeDirectory)
+import System.Environment (getArgs)
+-- import System.FilePath (combine, takeDirectory)
 import Text.Megaparsec (Parsec, anySingle, eof, manyTill, parse, satisfy, sepBy, setInput)
 import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
 import Text.Megaparsec.Error (errorBundlePretty)
+import Text.Printf
 
-readInputLines :: FilePath -> IO [String]
-readInputLines filename = lines <$> readFile filename
+readInputLines :: IO [String]
+readInputLines = lines <$> getRawInput
 
-readInputLinesInteger :: FilePath -> IO [Integer]
-readInputLinesInteger filename = map read . lines <$> readFile filename
+readInputLinesInteger :: IO [Integer]
+readInputLinesInteger = map read . lines <$> getRawInput
 
--- | Given a source file path, get the `in` file in that directory
-getInputFile :: FilePath -> FilePath
-getInputFile sourceFilePath = combine (takeDirectory sourceFilePath) "in"
+-- -- | Given a source file path, get the `in` file in that directory
+-- getInputFile :: FilePath -> FilePath
+-- getInputFile sourceFilePath = combine (takeDirectory sourceFilePath) "in"
 
--- | Given a source file path, get the `in.example` file in that directory
-getExampleInputFile :: FilePath -> FilePath
-getExampleInputFile sourceFilePath = combine (takeDirectory sourceFilePath) "in.example"
+-- -- | Given a source file path, get the `in.example` file in that directory
+-- getExampleInputFile :: FilePath -> FilePath
+-- getExampleInputFile sourceFilePath = combine (takeDirectory sourceFilePath) "in.example"
 
 removeEmptyString :: [String] -> [String]
 removeEmptyString = filter (not . null)
+
+readNormalInput :: String -> IO String
+readNormalInput day = readFile (printf "app/day%02d/in" (read day :: Integer))
+
+readExampleInput :: String -> IO String
+readExampleInput day = readFile (printf "app/day%02d/in.example" (read day :: Integer))
+
+-- | Get the input for the given day.
+--
+-- If a filename is provided in the command line that will be used as the
+-- input file.
+--
+-- If the filename is @-@ the stdin will be used as the input file.
+--
+-- Otherwise the input text file corresponding to the day number will be used.
+getRawInput :: IO String
+getRawInput =
+  do
+    day : _ : xs <- getArgs
+    case xs of
+      [] -> readNormalInput day
+      "0" : _ -> readNormalInput day
+      "1" : _ -> readExampleInput day
+      "-" : _ -> getContents
+      fileName : _ -> getRawInput
 
 -- https://github.com/glguy/advent2019/blob/master/common/Advent.hs
 
