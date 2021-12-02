@@ -20,10 +20,10 @@ removeEmptyString :: [String] -> [String]
 removeEmptyString = filter (not . null)
 
 readNormalInput :: String -> IO String
-readNormalInput day = readFile (printf "app/day%02d/in" (read day :: Integer))
+readNormalInput day = readFile (printf "app/Day%02d/in" (read day :: Integer))
 
 readExampleInput :: String -> IO String
-readExampleInput day = readFile (printf "app/day%02d/in.example" (read day :: Integer))
+readExampleInput day = readFile (printf "app/Day%02d/in.example" (read day :: Integer))
 
 -- | Get the input for the given day.
 --
