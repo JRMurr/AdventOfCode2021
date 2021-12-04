@@ -1,5 +1,6 @@
 module Day03.Mod where
 
+import Data.List
 import Debug.Trace
 import Utils.Mod
 
@@ -17,11 +18,18 @@ toBins = map (map charToInt)
 countOnesInPosition :: Int -> [BinNum] -> Int
 countOnesInPosition idx = count (\binNum -> binNum !! idx == 1)
 
+-- | Return a tuple whos first element is all binNums with the value in idx =1, and the send element who idx is 0
+--
+-- >>> partitionByIdx 0 [[1,0,0], [1,0,1], [0,1,0], [0,1,1]]
+-- ([[1,0,0],[1,0,1]],[[0,1,0],[0,1,1]])
+partitionByIdx :: Int -> [BinNum] -> ([BinNum], [BinNum])
+partitionByIdx idx = partition (\binNum -> binNum !! idx == 1)
+
 compareCounts :: [BinNum] -> Int -> (Int -> Int -> Bool) -> Int
-compareCounts binNum idx compareFunc = if onesCount `compareFunc` zeroCount then 1 else 0
+compareCounts binNums idx compareFunc = if onesCount `compareFunc` zeroCount then 1 else 0
   where
-    onesCount = countOnesInPosition idx binNum
-    zeroCount = length binNum - onesCount
+    (onesNums, zerosNums) = partitionByIdx idx binNums
+    (onesCount, zeroCount) = (length onesNums, length zerosNums)
 
 getMostCommonBit :: BitCounter
 getMostCommonBit binNum idx = compareCounts binNum idx (>=)

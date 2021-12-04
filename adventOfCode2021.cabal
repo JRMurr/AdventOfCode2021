@@ -26,11 +26,12 @@ executable adventOfCode2021
 
     -- Modules included in this executable, other than Main.
     other-modules:
+        Day04.Mod
         Day03.Mod
         Day02.Mod
         Day01.Mod
         Utils.Mod
-        Utils.Cords
+        Utils.Coords
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

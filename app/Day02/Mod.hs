@@ -2,7 +2,7 @@ module Day02.Mod where
 
 import Data.List
 import Data.List.Split
-import Utils.Cords
+import Utils.Coords
 import Utils.Mod
 
 tuplify2 :: [a] -> (a, a)

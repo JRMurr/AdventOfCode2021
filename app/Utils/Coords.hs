@@ -3,7 +3,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Utils.Cords where
+module Utils.Coords where
 
 import Data.Foldable
 import Data.Ix
@@ -36,6 +36,12 @@ above (C y x) = C (y -1) x
 below (C y x) = C (y + 1) x
 left (C y x) = C y (x -1)
 right (C y x) = C y (x + 1)
+
+northWest, northEast, southWest, southEast :: Coord -> Coord
+northWest = above . left
+northEast = above . right
+southWest = below . left
+southEast = below . right
 
 turnLeft, turnRight, turnAround :: Coord -> Coord
 turnLeft (C y x) = C (- x) y
@@ -98,3 +104,6 @@ drawCoords pixels = unlines [[pixel (C y x) | x <- [minx .. maxx]] | y <- [miny 
 -- | Read cords for each char in a list of strings. 0,0 would be the first char in the first string
 coordLines :: [String] -> [(Coord, Char)]
 coordLines rows = [(C y x, z) | (y, row) <- zip [0 ..] rows, (x, z) <- zip [0 ..] row]
+
+coordLinesInt :: [[Int]] -> [(Coord, Int)]
+coordLinesInt rows = [(C y x, z) | (y, row) <- zip [0 ..] rows, (x, z) <- zip [0 ..] row]
