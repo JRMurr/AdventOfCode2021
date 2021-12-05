@@ -15,15 +15,8 @@ type Board = Map Coord Int
 splitOnBlank :: [String] -> [[String]]
 splitOnBlank = splitOn [""]
 
-isEmptyOrSpace :: String -> Bool
-isEmptyOrSpace "" = False
-isEmptyOrSpace str = not (any isSpace str)
-
 toRow :: String -> [Int]
-toRow str = map read filtered
-  where
-    splitRow = splitOn " " str
-    filtered = filter isEmptyOrSpace splitRow -- remove extra whitespace lines
+toRow str = map read (words str)
 
 toBoard :: [String] -> Board
 toBoard rows = Map.fromList (coordLinesInt splitRows)
@@ -39,8 +32,6 @@ parseInput input = (parseBingoNums bingoNumStr, boards)
   where
     bingoNumStr : xs = splitOnBlank input
     boards = map toBoard xs
-
-type DirFunc = Coord -> Coord
 
 -- follows direction in board, if 5 elems are in that dir returns true
 isDirFull :: Int -> DirFunc -> Coord -> Board -> Bool

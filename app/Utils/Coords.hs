@@ -31,6 +31,8 @@ instance Ix Coord where
   range (C lorow locol, C hirow hicol) =
     [C row col | row <- [lorow .. hirow], col <- [locol .. hicol]]
 
+type DirFunc = Coord -> Coord
+
 above, below, left, right :: Coord -> Coord
 above (C y x) = C (y -1) x
 below (C y x) = C (y + 1) x
@@ -42,6 +44,12 @@ northWest = above . left
 northEast = above . right
 southWest = below . left
 southEast = below . right
+
+isAbove, isBelow, isLeft, isRight :: Coord -> Coord -> Bool
+isAbove (C y1 _) (C y2 _) = y1 < y2
+isBelow (C y1 _) (C y2 _) = y1 > y2
+isLeft (C _ x1) (C _ x2) = x1 < x2
+isRight (C _ x1) (C _ x2) = x1 > x2
 
 turnLeft, turnRight, turnAround :: Coord -> Coord
 turnLeft (C y x) = C (- x) y
