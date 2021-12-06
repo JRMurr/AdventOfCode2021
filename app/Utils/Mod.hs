@@ -108,3 +108,7 @@ chunks n xs =
 -- [(1,[2,3]),(2,[1,3]),(3,[1,2])]
 pickOne :: [a] -> [(a, [a])]
 pickOne xs = [(x, l ++ r) | (l, x : r) <- zip (inits xs) (tails xs)]
+
+-- | Iterate through list with index
+enumerate :: [b] -> [(Int, b)]
+enumerate x = zip [0 .. length x - 1] x
