@@ -1,9 +1,11 @@
 module Utils.Mod where
 
 import Data.List
+-- import System.FilePath (combine, takeDirectory)
+
+import Data.List.Split (splitOn)
 import Data.Void
 import System.Environment (getArgs)
--- import System.FilePath (combine, takeDirectory)
 import Text.Megaparsec (Parsec, anySingle, eof, manyTill, parse, satisfy, sepBy, setInput)
 import Text.Megaparsec.Char (newline)
 import Text.Megaparsec.Char.Lexer (decimal, signed)
@@ -43,6 +45,9 @@ getRawInput =
       "1" : _ -> readExampleInput day
       "-" : _ -> getContents
       fileName : _ -> getRawInput
+
+parseIntsWithSep :: String -> String -> [Int]
+parseIntsWithSep sep str = map read $ splitOn sep str
 
 -- https://github.com/glguy/advent2019/blob/master/common/Advent.hs
 
