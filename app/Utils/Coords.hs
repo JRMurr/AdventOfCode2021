@@ -78,6 +78,15 @@ neighbors c =
             below (right c)
           ]
 
+neighborsCardinal :: Coord -> [Coord]
+neighborsCardinal c =
+  c
+    `seq` [ above c,
+            left c,
+            right c,
+            below c
+          ]
+
 -- | Given a collection of cords, get the min and max cords that would contain all the cords in the collection
 boundingBox :: Foldable t => t Coord -> Maybe (Coord, Coord)
 boundingBox t =
