@@ -87,8 +87,6 @@ isCaveAllowed cave@(Small _) path aSmallHas2 = case (thisCount, aSmallHas2) of
   where
     thisCount = count (cave ==) path
 
--- isCavedAllowedMaybe :: Cave -> Path -> Bool -> Just Bool
-
 countPathsPart2 :: Edges -> [(Cave, Path, Bool)] -> Int
 countPathsPart2 _ [] = 0
 countPathsPart2 e ((cave, _, _) : xs) | cave == endCave = 1 + countPathsPart2 e xs
