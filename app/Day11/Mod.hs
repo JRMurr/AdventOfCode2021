@@ -59,7 +59,7 @@ part1 = do
   input <- getInputMap
   let (numFlashes, res) = runNSteps input 100
   putStr $ displayMap res
-  print $ numFlashes
+  print numFlashes
   return ()
 
 getStepAllFlash :: EnergyLevels -> Int -> Int

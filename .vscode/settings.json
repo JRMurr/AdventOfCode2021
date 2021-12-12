@@ -6,7 +6,8 @@
         "_dayTemplate": true
     },
     "cSpell.words": [
-        "Thruple"
+        "Thruple",
+        "unlines"
     ],
     "editor.formatOnSave": true
 }
