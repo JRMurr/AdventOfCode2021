@@ -1,6 +1,6 @@
 module Day01.Mod where
 
-import Utils.Mod
+import Utils.Mod (count, readInputLinesInteger)
 
 -- | Get all pairs of elements in a sliding window
 --
