@@ -6,11 +6,12 @@
 module Utils.Coords where
 
 import Data.Foldable
+import Data.Hashable
 import Data.Ix
 import Data.Map (Map)
 import qualified Data.Map as Map
 import GHC.Arr
-import GHC.Generics
+import GHC.Generics (Generic)
 
 data Coord = C !Int !Int
   deriving (Read, Show, Ord, Eq, Generic)
@@ -18,6 +19,8 @@ data Coord = C !Int !Int
 coordRow, coordCol :: Coord -> Int
 coordRow (C row _) = row
 coordCol (C _ col) = col
+
+instance Hashable Coord
 
 instance Ix Coord where
   unsafeIndex (C lorow locol, C _hirow hicol) (C row col) =
