@@ -8,22 +8,41 @@ type BinNum = [Int]
 toDecimal :: BinNum -> Int
 toDecimal bits = foldl (\sum (idx, val) -> sum + val * (2 ^ idx)) 0 (zip [0 .. (length bits)] (reverse bits))
 
-toBin :: Int -> BinNum
-toBin 0 = [0]
-toBin 1 = [1]
-toBin n
-  | even n = toBin (n `div` 2) ++ [0]
-  | otherwise = toBin (n `div` 2) ++ [1]
+-- toBin :: Int -> BinNum
+-- toBin 0 = [0]
+-- toBin 1 = [1]
+-- toBin n
+--   | even n = toBin (n `div` 2) ++ [0]
+--   | otherwise = toBin (n `div` 2) ++ [1]
+
+-- getBin :: String -> BinNum
+-- getBin str = toBin num
+--   where
+--     [(num, _)] = readHex str -- TODO: maybe trim ending zeros?
+
+hexCharToBin :: Char -> BinNum
+hexCharToBin '0' = [0, 0, 0, 0]
+hexCharToBin '1' = [0, 0, 0, 1]
+hexCharToBin '2' = [0, 0, 1, 0]
+hexCharToBin '3' = [0, 0, 1, 1]
+hexCharToBin '4' = [0, 1, 0, 0]
+hexCharToBin '5' = [0, 1, 0, 1]
+hexCharToBin '6' = [0, 1, 1, 0]
+hexCharToBin '7' = [0, 1, 1, 1]
+hexCharToBin '8' = [1, 0, 0, 0]
+hexCharToBin '9' = [1, 0, 0, 1]
+hexCharToBin 'A' = [1, 0, 1, 0]
+hexCharToBin 'B' = [1, 0, 1, 1]
+hexCharToBin 'C' = [1, 1, 0, 0]
+hexCharToBin 'D' = [1, 1, 0, 1]
+hexCharToBin 'E' = [1, 1, 1, 0]
+hexCharToBin 'F' = [1, 1, 1, 1]
 
 getBin :: String -> BinNum
-getBin str = toBin num
-  where
-    [(num, _)] = readHex str -- TODO: maybe trim ending zeros?
+getBin = concatMap hexCharToBin
 
 readBin :: IO BinNum
 readBin = getBin <$> getRawInput
-
--- parsePacket :: BinNum -> BinNum
 
 -- First 3 bits are packet version
 -- Next 3 bits are type id
@@ -51,22 +70,33 @@ parseLiteral binNum = let (literal, rest) = parseHelper binNum in (toDecimal lit
         thisPart = take 4 xs
         (restNum, remainingPackets) = parseHelper (drop 4 xs)
 
-parseUntilRestIsLen :: Int -> BinNum -> ([Packet], BinNum)
-parseUntilRestIsLen n binNum | length binNum <= n = ([], binNum)
-parseUntilRestIsLen n binNum = (parsedPacket : recParsed, recRemaining)
+-- parseUntilRestIsLen :: Int -> BinNum -> ([Packet], BinNum)
+-- parseUntilRestIsLen n binNum | length binNum <= n = ([], binNum)
+-- parseUntilRestIsLen n binNum = (parsedPacket : recParsed, recRemaining)
+--   where
+--     startLen = length binNum
+--     (parsedPacket, remaining) = parsePacket binNum
+--     newLen = length remaining
+--     newN = n - (startLen - newLen)
+--     (recParsed, recRemaining) = parseUntilRestIsLen newN remaining
+
+parseUntilEmpty :: BinNum -> [Packet]
+parseUntilEmpty binNum = case parsePacket binNum of
+  (Empty, _) -> []
+  (parsed, rest) -> parsed : parseUntilEmpty rest
+
+parseNBits :: Int -> BinNum -> ([Packet], BinNum)
+parseNBits n binNum | length binNum <= n = ([], binNum)
+parseNBits n binNum = (parseUntilEmpty packets, rest)
   where
-    startLen = length binNum
-    (parsedPacket, remaining) = parsePacket binNum
-    newLen = length binNum
-    newN = n - (startLen - newLen)
-    (recParsed, recRemaining) = parseUntilRestIsLen newN remaining
+    (packets, rest) = splitAt n binNum
 
 parseNPackets :: Int -> BinNum -> ([Packet], BinNum)
 parseNPackets 0 binNum = ([], binNum)
 parseNPackets n binNum = (parsedPacket : recParsed, recRemaining)
   where
     (parsedPacket, remaining) = parsePacket binNum
-    (recParsed, recRemaining) = parseUntilRestIsLen (n -1) remaining
+    (recParsed, recRemaining) = parseNPackets (n -1) remaining
 
 parsePacketData :: BinNum -> BinNum -> (PacketData, BinNum)
 parsePacketData [1, 0, 0] binData = let (literal, rest) = parseLiteral binData in (Literal literal, rest)
@@ -74,8 +104,7 @@ parsePacketData typeId (0 : binData) = (Op (toDecimal typeId) subPackets, remain
   where
     (subPacketLenBin, rest) = splitAt 15 binData
     subPacketLen = toDecimal subPacketLenBin
-    goalLen = length rest - subPacketLen
-    (subPackets, remaining) = parseUntilRestIsLen goalLen rest
+    (subPackets, remaining) = parseNBits subPacketLen rest
 parsePacketData typeId (1 : binData) = (Op (toDecimal typeId) subPackets, remaining)
   where
     (numPackets, rest) = splitAt 11 binData
@@ -83,6 +112,7 @@ parsePacketData typeId (1 : binData) = (Op (toDecimal typeId) subPackets, remain
 parsePacketData typeId notHandled = error ("sad: " ++ show (typeId, notHandled))
 
 parsePacket :: BinNum -> (Packet, BinNum)
+parsePacket [] = (Empty, [])
 parsePacket binNum | all (== 0) binNum = (Empty, [])
 parsePacket binNum = (Packet {version = toDecimal version, packetData = parsedData}, restBits)
   where
@@ -90,12 +120,16 @@ parsePacket binNum = (Packet {version = toDecimal version, packetData = parsedDa
     (typeId, rest') = splitAt 3 rest
     (parsedData, restBits) = parsePacketData typeId rest'
 
+addAllVersion :: Packet -> Int
+addAllVersion Packet {version = v, packetData = Literal _} = v
+addAllVersion Packet {version = v, packetData = (Op _ subPackets)} = v + sum (map addAllVersion subPackets)
+
 part1 :: IO ()
 part1 = do
   num <- readBin
-  -- let num = getBin "EE00D40C823060"
   print num
-  print $ parsePacket num
+  let (packet, _) = parsePacket num
+  print $ addAllVersion packet
   return ()
 
 part2 :: IO ()
