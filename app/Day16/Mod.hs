@@ -128,15 +128,29 @@ addAllVersion Packet {version = v, packetData = (Op _ subPackets)} = v + sum (ma
 part1 :: IO ()
 part1 = do
   num <- readBin
-  print num
   let Just (packet, _) = parsePacket num
   print $ addAllVersion packet
   return ()
 
+getValueFromPacket :: Packet -> Int
+getValueFromPacket Packet {packetData = p} = getValue p
+
+getValue :: PacketData -> Int
+getValue (Literal v) = v
+getValue (Op 0 subPackets) = sum $ map getValueFromPacket subPackets
+getValue (Op 1 subPackets) = product $ map getValueFromPacket subPackets
+getValue (Op 2 subPackets) = minimum $ map getValueFromPacket subPackets
+getValue (Op 3 subPackets) = maximum $ map getValueFromPacket subPackets
+getValue (Op 5 [p1, p2]) = let (v1, v2) = (getValueFromPacket p1, getValueFromPacket p2) in if v1 > v2 then 1 else 0
+getValue (Op 6 [p1, p2]) = let (v1, v2) = (getValueFromPacket p1, getValueFromPacket p2) in if v1 < v2 then 1 else 0
+getValue (Op 7 [p1, p2]) = let (v1, v2) = (getValueFromPacket p1, getValueFromPacket p2) in if v1 == v2 then 1 else 0
+getValue x = error ("sad x: " ++ show x)
+
 part2 :: IO ()
 part2 = do
-  [input] <- readInputLines
-  print "part2"
+  num <- readBin
+  let Just (packet, _) = parsePacket num
+  print $ getValueFromPacket packet
   return ()
 
 dispatch :: [(Int, IO ())]
