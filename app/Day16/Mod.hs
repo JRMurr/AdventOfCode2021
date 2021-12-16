@@ -55,7 +55,7 @@ readBin = getBin <$> getRawInput
 
 data PacketData = Literal Int | Op Int [Packet] deriving (Show, Eq)
 
-data Packet = Packet {version :: Int, packetData :: PacketData} | Empty deriving (Show, Eq)
+data Packet = Packet {version :: Int, packetData :: PacketData} deriving (Show, Eq)
 
 -- >>> parseLiteral [1,0,1,1,1,1,1,1,1,0,0,0,1,0,1,0,0,0]
 -- (2021,[0,0,0])
@@ -82,8 +82,8 @@ parseLiteral binNum = let (literal, rest) = parseHelper binNum in (toDecimal lit
 
 parseUntilEmpty :: BinNum -> [Packet]
 parseUntilEmpty binNum = case parsePacket binNum of
-  (Empty, _) -> []
-  (parsed, rest) -> parsed : parseUntilEmpty rest
+  Nothing -> []
+  Just (parsed, rest) -> parsed : parseUntilEmpty rest
 
 parseNBits :: Int -> BinNum -> ([Packet], BinNum)
 parseNBits n binNum | length binNum <= n = ([], binNum)
@@ -93,10 +93,11 @@ parseNBits n binNum = (parseUntilEmpty packets, rest)
 
 parseNPackets :: Int -> BinNum -> ([Packet], BinNum)
 parseNPackets 0 binNum = ([], binNum)
-parseNPackets n binNum = (parsedPacket : recParsed, recRemaining)
-  where
-    (parsedPacket, remaining) = parsePacket binNum
-    (recParsed, recRemaining) = parseNPackets (n -1) remaining
+parseNPackets n binNum = case parsePacket binNum of
+  Nothing -> ([], [])
+  Just (parsedPacket, remaining) ->
+    let (recParsed, recRemaining) = parseNPackets (n -1) remaining
+     in (parsedPacket : recParsed, recRemaining)
 
 parsePacketData :: BinNum -> BinNum -> (PacketData, BinNum)
 parsePacketData [1, 0, 0] binData = let (literal, rest) = parseLiteral binData in (Literal literal, rest)
@@ -111,10 +112,10 @@ parsePacketData typeId (1 : binData) = (Op (toDecimal typeId) subPackets, remain
     (subPackets, remaining) = parseNPackets (toDecimal numPackets) rest
 parsePacketData typeId notHandled = error ("sad: " ++ show (typeId, notHandled))
 
-parsePacket :: BinNum -> (Packet, BinNum)
-parsePacket [] = (Empty, [])
-parsePacket binNum | all (== 0) binNum = (Empty, [])
-parsePacket binNum = (Packet {version = toDecimal version, packetData = parsedData}, restBits)
+parsePacket :: BinNum -> Maybe (Packet, BinNum)
+parsePacket [] = Nothing
+parsePacket binNum | all (== 0) binNum = Nothing
+parsePacket binNum = Just (Packet {version = toDecimal version, packetData = parsedData}, restBits)
   where
     (version, rest) = splitAt 3 binNum
     (typeId, rest') = splitAt 3 rest
@@ -128,7 +129,7 @@ part1 :: IO ()
 part1 = do
   num <- readBin
   print num
-  let (packet, _) = parsePacket num
+  let Just (packet, _) = parsePacket num
   print $ addAllVersion packet
   return ()
 
