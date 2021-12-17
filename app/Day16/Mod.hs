@@ -1,5 +1,6 @@
 module Day16.Mod where
 
+import Debug.Trace
 import Numeric
 import Utils.Mod
 
@@ -37,6 +38,7 @@ hexCharToBin 'C' = [1, 1, 0, 0]
 hexCharToBin 'D' = [1, 1, 0, 1]
 hexCharToBin 'E' = [1, 1, 1, 0]
 hexCharToBin 'F' = [1, 1, 1, 1]
+hexCharToBin _ = []
 
 getBin :: String -> BinNum
 getBin = concatMap hexCharToBin
@@ -86,7 +88,7 @@ parseUntilEmpty binNum = case parsePacket binNum of
   Just (parsed, rest) -> parsed : parseUntilEmpty rest
 
 parseNBits :: Int -> BinNum -> ([Packet], BinNum)
-parseNBits n binNum | length binNum <= n = ([], binNum)
+parseNBits n binNum | length binNum < n = ([], binNum)
 parseNBits n binNum = (parseUntilEmpty packets, rest)
   where
     (packets, rest) = splitAt n binNum
@@ -144,7 +146,7 @@ getValue (Op 3 subPackets) = maximum $ map getValueFromPacket subPackets
 getValue (Op 5 [p1, p2]) = let (v1, v2) = (getValueFromPacket p1, getValueFromPacket p2) in if v1 > v2 then 1 else 0
 getValue (Op 6 [p1, p2]) = let (v1, v2) = (getValueFromPacket p1, getValueFromPacket p2) in if v1 < v2 then 1 else 0
 getValue (Op 7 [p1, p2]) = let (v1, v2) = (getValueFromPacket p1, getValueFromPacket p2) in if v1 == v2 then 1 else 0
-getValue x = error ("sad x: " ++ show x)
+getValue x = error ("sad: " ++ show x)
 
 part2 :: IO ()
 part2 = do
