@@ -105,9 +105,6 @@ part1 = do
   print $ runAStar input
   return ()
 
-cartProd :: [a] -> [b] -> [(a, b)]
-cartProd xs ys = [(x, y) | x <- xs, y <- ys]
-
 getNewVal :: Int -> Int -> Int
 getNewVal startValue incrAmount = if added > 9 then added `mod` 9 else added
   where

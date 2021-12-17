@@ -117,3 +117,6 @@ pickOne xs = [(x, l ++ r) | (l, x : r) <- zip (inits xs) (tails xs)]
 -- | Iterate through list with index
 enumerate :: [b] -> [(Int, b)]
 enumerate x = zip [0 .. length x - 1] x
+
+cartProd :: [a] -> [b] -> [(a, b)]
+cartProd xs ys = [(x, y) | x <- xs, y <- ys]
