@@ -54,7 +54,7 @@ isCordInBasin bMap lowPoint c = c `elem` currBasins
 fillBasins :: Tubes -> BasinMap -> [(Coord, Coord)] -> BasinMap
 fillBasins _ bMap [] = bMap
 fillBasins tubes bMap ((lowPoint, possiblePoint) : xs) | isCordInBasin bMap lowPoint possiblePoint = fillBasins tubes bMap xs
-fillBasins tubes bMap ((lowPoint, possiblePoint) : xs) = fillBasins tubes (addCurToMap) (newToVisit ++ xs)
+fillBasins tubes bMap ((lowPoint, possiblePoint) : xs) = fillBasins tubes addCurToMap (newToVisit ++ xs)
   where
     addCurToMap = Map.adjust (possiblePoint :) lowPoint bMap
     validNeighbors = filter (isCoordValid tubes) (neighborsCardinal possiblePoint)
