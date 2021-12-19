@@ -1,5 +1,6 @@
 module Day19.Mod where
 
+import Data.Bifunctor
 import Data.Char (isDigit)
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as Map
@@ -8,21 +9,22 @@ import Data.List.Split (splitOn)
 import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
+import Debug.Trace
 import Utils.Mod
 
 type Coord = (Int, Int, Int)
 
-type Scanners = IntMap [Coord]
+type ScannerSet = Set Coord
 
-type Beacons = [Coord]
+type Scanners = IntMap ScannerSet
 
 type RotationMult = (Int, Int, Int)
 
 -- rotation and num swaps to do
 type Orientation = (RotationMult, Int)
 
-parseScannerInput :: [String] -> (Int, [Coord])
-parseScannerInput (header : coordStr) = (getScannerNum header, map parseCoord coordStr)
+parseScannerInput :: [String] -> (Int, ScannerSet)
+parseScannerInput (header : coordStr) = (getScannerNum header, Set.fromList (map parseCoord coordStr))
   where
     -- i should really figure out regexs...
     getScannerNum :: String -> Int
@@ -63,41 +65,58 @@ allOrientations = cartProd rotationMults [0 .. 2]
 getOrientation :: Orientation -> Coord -> Coord
 getOrientation (r, n) c = rotateCoord r $ swapNTimes n c
 
-applyOrientation :: Orientation -> [Coord] -> [Coord]
-applyOrientation o = map (getOrientation o)
+applyOrientation :: Orientation -> ScannerSet -> ScannerSet
+applyOrientation o = Set.map (getOrientation o)
 
 addCoord, subCoord :: Coord -> Coord -> Coord
 addCoord (x, y, z) (x', y', z') = (x + x', y + y', z + z')
 subCoord (x, y, z) (x', y', z') = (x - x', y - y', z - z')
 
--- TODO: might be a good idea to pass coords as sets to avoid conversions
+type AdjustedScanner = (ScannerSet, Coord) -- beacons cords with the diff used to make the map
+
 -- get all pairs from the list of coords, diff the pair to try to normalize the second set
--- returns the updated second param if theres a match
-detectMatch :: [Coord] -> [Coord] -> Maybe [Coord]
+-- returns the updated second param and diff if theres a match
+detectMatch :: ScannerSet -> ScannerSet -> Maybe (ScannerSet, Coord)
 detectMatch goodSet b = find isGood allAdjusted
   where
-    diffs = map (uncurry subCoord) (cartProd goodSet b)
-    getAdjusted diff = map (addCoord diff) b
-    allAdjusted = map getAdjusted diffs
-    isGood coords = Set.size (getCommon goodSet coords) >= 12
+    diffs = Set.map (uncurry subCoord) (Set.cartesianProduct goodSet b)
+    getAdjusted diff = (Set.map (addCoord diff) b, diff)
+    allAdjusted = Set.map getAdjusted diffs
+    isGood (coords, _) = Set.size (Set.intersection goodSet coords) >= 12
 
-tryMatch :: [Coord] -> [Coord] -> Maybe [Coord]
+tryMatch :: ScannerSet -> ScannerSet -> Maybe (ScannerSet, Coord)
 tryMatch goodSet b = listToMaybe possibleMatches
   where
     bOrientations = map (`applyOrientation` b) allOrientations
     possibleMatches = mapMaybe (detectMatch goodSet) bOrientations
 
-getCommon :: [Coord] -> [Coord] -> Set Coord
-getCommon a b = Set.intersection (toSet a) (toSet b)
-  where
-    toSet x = Set.fromList x
+-- Given set list of good scaners and a new try to match up scanners
+-- if match add adjust curr to list of good
+-- TODO: need to possibly look at a scanner multiple times since the goodset might not be "ready" for on the first look
+stepMatch :: [AdjustedScanner] -> ScannerSet -> [AdjustedScanner]
+stepMatch adjustedScanners curr = case listToMaybe $ mapMaybe ((`tryMatch` curr) . fst) adjustedScanners of
+  Nothing -> trace "im so sad" $ adjustedScanners
+  Just set -> set : adjustedScanners
 
--- TODO: go over all pairs of sensors and try to match up beacons
--- start with sensor 0 as good set
+fullMatch :: Scanners -> (ScannerSet, [Coord])
+fullMatch s = foldl' (\(accSet, accDiff) (set, diff) -> (Set.union accSet set, diff : accDiff)) (Set.empty, []) allSets
+  where
+    initGood = [((Map.!) s 0, (0, 0, 0))]
+    toCheckLst = Map.elems (Map.delete 0 s)
+    allSets = foldl' (stepMatch) initGood toCheckLst
+
+showCoord :: Coord -> String
+showCoord (x, y, z) = show x ++ "," ++ show y ++ "," ++ show z
 
 part1 :: IO ()
 part1 = do
   input <- readScannerMap
+  let (allBeacons, diffs) = fullMatch input
+  let sorted = sort $ Set.elems allBeacons
+  mapM_ (putStrLn . showCoord) sorted
+  print "--------"
+  print $ Set.size allBeacons
+  print $ diffs
   return ()
 
 part2 :: IO ()
