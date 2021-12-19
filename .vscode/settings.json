@@ -9,8 +9,10 @@
         "fmap",
         "Hashable",
         "Ints",
+        "Mults",
         "Thruple",
         "treeify",
+        "trimap",
         "unlines"
     ],
     "editor.formatOnSave": true
