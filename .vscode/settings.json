@@ -10,6 +10,7 @@
         "Hashable",
         "Ints",
         "Thruple",
+        "treeify",
         "unlines"
     ],
     "editor.formatOnSave": true
