@@ -13,6 +13,7 @@
         "Thruple",
         "treeify",
         "trimap",
+        "uncurry",
         "unlines"
     ],
     "editor.formatOnSave": true
