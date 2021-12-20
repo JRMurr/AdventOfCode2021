@@ -116,20 +116,19 @@ cordAngle :: Coord -> Double
 cordAngle (C y x) = atan2 (- fromIntegral x) (fromIntegral y)
 
 drawCoords :: Map Coord Char -> String
-drawCoords pixels = unlines [[pixel (C y x) | x <- [minx .. maxx]] | y <- [miny .. maxy]]
-  where
-    pixel c = Map.findWithDefault ' ' c pixels
-    Just (C miny minx, C maxy maxx) = boundingBox (Map.keys pixels)
+drawCoords = drawCoordsGen id ' '
 
 drawCoords' :: Char -> Map Coord Char -> String
-drawCoords' defaultChar pixels = unlines [[pixel (C y x) | x <- [minx .. maxx]] | y <- [miny .. maxy]]
+drawCoords' = drawCoordsGen id
+
+drawCoordsGen :: (t -> Char) -> t -> Map Coord t -> String
+drawCoordsGen toChar def pixels = unlines [[pixel (C y x) | x <- [minx .. maxx]] | y <- [miny .. maxy]]
   where
-    pixel c = Map.findWithDefault defaultChar c pixels
+    pixel c = toChar $ Map.findWithDefault def c pixels
     Just (C miny minx, C maxy maxx) = boundingBox (Map.keys pixels)
 
 -- | Read cords for each char in a list of strings. 0,0 would be the first char in the first string
-coordLines :: [String] -> [(Coord, Char)]
+coordLines :: [[b]] -> [(Coord, b)]
 coordLines rows = [(C y x, z) | (y, row) <- zip [0 ..] rows, (x, z) <- zip [0 ..] row]
 
-coordLinesInt :: [[Int]] -> [(Coord, Int)]
-coordLinesInt rows = [(C y x, z) | (y, row) <- zip [0 ..] rows, (x, z) <- zip [0 ..] row]
+coordLinesInt = coordLines

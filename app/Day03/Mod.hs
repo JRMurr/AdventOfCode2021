@@ -4,8 +4,6 @@ import Data.List
 import Debug.Trace
 import Utils.Mod
 
-type BinNum = [Int]
-
 type BitCounter = [BinNum] -> Int -> Int
 
 charToInt :: Char -> Int
@@ -36,9 +34,6 @@ getMostCommonBit binNum idx = compareCounts binNum idx (>=)
 
 getLeastCommonBit :: BitCounter
 getLeastCommonBit binNum idx = compareCounts binNum idx (<)
-
-toDecimal :: BinNum -> Int
-toDecimal bits = foldl (\sum (idx, val) -> sum + val * (2 ^ idx)) 0 (zip [0 .. (length bits)] (reverse bits))
 
 part1 :: IO ()
 part1 = do

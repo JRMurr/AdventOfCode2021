@@ -120,3 +120,8 @@ enumerate x = zip [0 .. length x - 1] x
 
 cartProd :: [a] -> [b] -> [(a, b)]
 cartProd xs ys = [(x, y) | x <- xs, y <- ys]
+
+type BinNum = [Int]
+
+toDecimal :: BinNum -> Int
+toDecimal bits = foldl (\sum (idx, val) -> sum + val * (2 ^ idx)) 0 (zip [0 .. (length bits)] (reverse bits))

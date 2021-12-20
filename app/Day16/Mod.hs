@@ -4,11 +4,6 @@ import Debug.Trace
 import Numeric
 import Utils.Mod
 
-type BinNum = [Int]
-
-toDecimal :: BinNum -> Int
-toDecimal bits = foldl (\sum (idx, val) -> sum + val * (2 ^ idx)) 0 (zip [0 .. (length bits)] (reverse bits))
-
 -- toBin :: Int -> BinNum
 -- toBin 0 = [0]
 -- toBin 1 = [1]
