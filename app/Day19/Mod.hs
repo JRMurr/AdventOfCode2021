@@ -44,29 +44,24 @@ getScanners = Map.fromList . map parseScannerInput . splitOn [""]
 readScannerMap :: IO Scanners
 readScannerMap = getScanners <$> readInputLines
 
--- Multiply a coord by an element in this to "rotate" it
-rotationMults :: [RotationMult]
-rotationMults = [(x, y, z) | x <- r, y <- r, z <- r]
+data Rotation = RotateX | RotateY | RotateZ
+  deriving (Eq, Show)
+
+-- All distinct rotations
+allRotations :: [[Rotation]]
+allRotations = concatMap rz [[], [RotateX], [RotateX, RotateX], [RotateX, RotateX, RotateX], [RotateY], [RotateY, RotateY, RotateY]]
   where
-    r = [1, -1]
+    rz v = [v, RotateZ : v, RotateZ : RotateZ : v, RotateZ : RotateZ : RotateZ : v]
 
-rotateCoord :: RotationMult -> Coord -> Coord
-rotateCoord (xm, ym, zm) (x, y, z) = (x * xm, y * ym, z * zm)
-
-swapNTimes :: Int -> Coord -> Coord
--- swapNTimes n _ | n > 3 = error ("bad n:" ++ show n)
-swapNTimes n c = iterate swapPoints c !! n
+rotate :: Coord -> [Rotation] -> Coord
+rotate = foldl rotate'
   where
-    swapPoints (x, y, z) = (z, x, y)
+    rotate' (x, y, z) RotateX = (x, z, - y)
+    rotate' (x, y, z) RotateY = (- z, y, x)
+    rotate' (x, y, z) RotateZ = (y, - x, z)
 
-allOrientations :: [Orientation]
-allOrientations = cartProd rotationMults [0 .. 2]
-
-getOrientation :: Orientation -> Coord -> Coord
-getOrientation (r, n) c = swapNTimes n $ rotateCoord r c
-
-applyOrientation :: Orientation -> ScannerSet -> ScannerSet
-applyOrientation o = Set.map (getOrientation o)
+applyRotation :: ScannerSet -> [Rotation] -> ScannerSet
+applyRotation coords r = Set.map (`rotate` r) coords
 
 addCoord, subCoord :: Coord -> Coord -> Coord
 addCoord (x, y, z) (x', y', z') = (x + x', y + y', z + z')
@@ -74,28 +69,20 @@ subCoord (x, y, z) (x', y', z') = (x - x', y - y', z - z')
 
 type AdjustedScanner = (ScannerSet, Coord) -- beacons cords with the diff used to make the map
 
--- get all pairs from the list of coords, diff the pair to try to normalize the second set
--- returns the updated second param and diff if theres a match
--- detectMatch :: ScannerSet -> ScannerSet -> Maybe AdjustedScanner
--- detectMatch goodSet toCheck = find isGood allAdjusted
---   where
---     diffs = Set.map (uncurry subCoord) (Set.cartesianProduct goodSet toCheck)
---     getAdjusted diff = (Set.map (addCoord diff) toCheck, diff)
---     allAdjusted = Set.map getAdjusted diffs
---     intersectSize coords = Set.size (Set.intersection goodSet coords)
---     isGood (coords, _) = intersectSize coords >= 12
+getAllPossibleOrientations :: ScannerSet -> [ScannerSet]
+getAllPossibleOrientations toCheck = map (applyRotation toCheck) allRotations
 
 tryMatch :: AdjustedScanner -> ScannerSet -> Maybe AdjustedScanner
 tryMatch (goodSet, _) toCheck = listToMaybe possibleMatches
   where
-    bOrientations = map (`applyOrientation` toCheck) allOrientations
-    possibleMatches = mapMaybe detectMatch bOrientations
+    possibleMatches = mapMaybe detectMatch (getAllPossibleOrientations toCheck)
     detectMatch :: ScannerSet -> Maybe AdjustedScanner
     detectMatch orientedCheck = find isGood allAdjusted
       where
         diffs = Set.map (uncurry subCoord) (Set.cartesianProduct goodSet orientedCheck)
+        getAdjusted :: Coord -> AdjustedScanner
         getAdjusted diff = (Set.map (addCoord diff) orientedCheck, diff)
-        allAdjusted = Set.map getAdjusted diffs
+        allAdjusted = Set.map getAdjusted diffs -- traceShow ("goodSet len:", Set.size goodSet, "toCheck size:", Set.size orientedCheck, "diffs len:", Set.size diffs) $
         intersectSize coords = Set.size (Set.intersection goodSet coords)
         isGood (coords, _) = intersectSize coords >= 12
 
@@ -115,13 +102,6 @@ findNextScanner adjustedScanners toCheckLst = head $ mapMaybe tryStep picked
     tryStep :: (ScannerSet, [ScannerSet]) -> Maybe ([AdjustedScanner], [ScannerSet])
     tryStep (toTry, rest) = getOutput rest <$> stepMatch adjustedScanners toTry
 
--- fullMatch :: Scanners -> (ScannerSet, [Coord])
--- fullMatch s = foldl' (\(accSet, accDiff) (set, diff) -> (Set.union accSet set, diff : accDiff)) (Set.empty, []) allSets
---   where
---     initGood = [((Map.!) s 0, (0, 0, 0))]
---     toCheckLst = Map.elems (Map.delete 0 s)
---     allSets = foldl' (stepMatch) initGood toCheckLst
-
 joinAdjusted :: [AdjustedScanner] -> (ScannerSet, [Coord])
 joinAdjusted = foldl' (\(accSet, accDiff) (set, diff) -> (Set.union accSet set, diff : accDiff)) (Set.empty, [])
 
@@ -135,7 +115,7 @@ fullMatch s = joinAdjusted finalAdjusted
     fullMatch' x [] = x
     fullMatch' adjusted toCheck =
       let (newAdjusted, newToCheck) = findNextScanner adjusted toCheck
-       in fullMatch' newAdjusted newToCheck
+       in traceShow ("remaining: ", length newToCheck) $ fullMatch' newAdjusted newToCheck
 
 showCoord :: Coord -> String
 showCoord (x, y, z) = show x ++ "," ++ show y ++ "," ++ show z
@@ -151,10 +131,17 @@ part1 = do
   print $ diffs
   return ()
 
+manhattan :: Coord -> Coord -> Int
+manhattan (x, y, z) (x', y', z') = abs (x - x') + abs (y - y') + abs (z - z')
+
+getMaxManhattan :: [Coord] -> Int
+getMaxManhattan coords = maximum [manhattan x y | (x, y) <- cartProd coords coords]
+
 part2 :: IO ()
 part2 = do
-  input <- readInputLines
-  print "part2"
+  input <- readScannerMap
+  let (_, diffs) = fullMatch input
+  print $ getMaxManhattan diffs
   return ()
 
 dispatch :: [(Int, IO ())]
