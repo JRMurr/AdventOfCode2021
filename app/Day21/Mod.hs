@@ -77,13 +77,28 @@ part1 = do
   print $ rollNums * score
   return ()
 
+data PlayersP2 = Players {p1 :: Player, p2 :: Player} deriving (Show)
+
+getPlayer :: PlayersP2 -> Int -> Player
+getPlayer Players {p1 = p1} 0 = p1
+getPlayer Players {p2 = p2} 1 = p2
+getPlayer _ _ = error "invalid p num"
+
+adjustPlayer :: PlayersP2 -> Int -> (Player -> Player) -> PlayersP2
+adjustPlayer players@Players {p1 = p1, p2 = p2} num adjustFn
+  | num == 0 = Players {p1 = newPlayer, p2 = p2}
+  | num == 1 = Players {p1 = p1, p2 = newPlayer}
+  | otherwise = error "invalid p num"
+  where
+    newPlayer = adjustFn (getPlayer players num)
+
 -- return the player number of the winner if there is one
-checkWinP2 :: Players -> Maybe Int
+checkWinP2 :: PlayersP2 -> Maybe Int
 checkWinP2 pMap = find isWin [0, 1]
   where
-    isWin num = score ((M.!) pMap num) >= 21
+    isWin num = score (getPlayer pMap num) >= 21
 
-type GameState = (Int, Players) -- rollNumber and state of players
+type GameState = (Int, PlayersP2) -- rollNumber and state of players
 
 allDiceRolls :: [Int]
 allDiceRolls = [sum [x, y, z] | x <- baseRoll, y <- baseRoll, z <- baseRoll]
@@ -91,10 +106,9 @@ allDiceRolls = [sum [x, y, z] | x <- baseRoll, y <- baseRoll, z <- baseRoll]
     baseRoll = [1, 2, 3]
 
 getAllNewStates :: GameState -> [GameState]
-getAllNewStates (rollNum, pMap) = map (\roll -> (rollNum + 1, M.adjust (movePlayer roll) playerNum pMap)) allDiceRolls
+getAllNewStates (rollNum, pMap) = map (\roll -> (newRoll, adjustPlayer pMap rollNum (movePlayer roll))) allDiceRolls
   where
-    playerNums = cycle [0, 1]
-    playerNum = playerNums !! rollNum
+    newRoll = (rollNum + 1) `mod` 2
 
 runGameP2 :: [GameState] -> (Int, Int) -> (Int, Int)
 runGameP2 [] res = res
@@ -106,11 +120,16 @@ runGameP2 (curr@(rollNum, pMap) : xs) wins@(p1Win, p2Win) = case checkWinP2 pMap
   where
     newStates = getAllNewStates curr
 
+toPlayersP2 :: Players -> PlayersP2
+toPlayersP2 pMap = Players {p1 = get 0, p2 = get 1}
+  where
+    get num = (M.!) pMap num
+
 part2 :: IO ()
 part2 = do
-  input <- readStarts
+  input <- toPlayersP2 <$> readStarts
   print input
-  print $ runGameP2 [(0, input)] (0, 0)
+  -- print $ runGameP2 [(0, input)] (0, 0)
   return ()
 
 dispatch :: [(Int, IO ())]
