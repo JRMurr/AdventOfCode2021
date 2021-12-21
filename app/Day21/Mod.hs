@@ -110,15 +110,17 @@ getAllNewStates (rollNum, pMap) = map (\roll -> (newRoll, adjustPlayer pMap roll
   where
     newRoll = (rollNum + 1) `mod` 2
 
+-- TODO: cache game state to win counts to short circut
 runGameP2 :: [GameState] -> (Int, Int) -> (Int, Int)
 runGameP2 [] res = res
 runGameP2 (curr@(rollNum, pMap) : xs) wins@(p1Win, p2Win) = case checkWinP2 pMap of
   Just (0) -> runGameP2 xs (p1Win + 1, p2Win)
   Just 1 -> runGameP2 xs (p1Win, p2Win + 1)
   Just _ -> error "invalid winner"
-  Nothing -> runGameP2 (newStates ++ xs) wins
+  Nothing -> traceShow ("all: ", length allStates) $ runGameP2 allStates wins
   where
     newStates = getAllNewStates curr
+    allStates = newStates ++ xs
 
 toPlayersP2 :: Players -> PlayersP2
 toPlayersP2 pMap = Players {p1 = get 0, p2 = get 1}
@@ -129,7 +131,7 @@ part2 :: IO ()
 part2 = do
   input <- toPlayersP2 <$> readStarts
   print input
-  -- print $ runGameP2 [(0, input)] (0, 0)
+  print $ runGameP2 [(0, input)] (0, 0)
   return ()
 
 dispatch :: [(Int, IO ())]
