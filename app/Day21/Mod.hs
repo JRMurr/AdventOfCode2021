@@ -4,6 +4,8 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as M
 import Data.List
 import Data.List.Split
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Debug.Trace
 import Utils.Mod
 
@@ -77,7 +79,7 @@ part1 = do
   print $ rollNums * score
   return ()
 
-data PlayersP2 = Players {p1 :: Player, p2 :: Player} deriving (Show)
+data PlayersP2 = Players {p1 :: Player, p2 :: Player} deriving (Show, Ord, Eq)
 
 getPlayer :: PlayersP2 -> Int -> Player
 getPlayer Players {p1 = p1} 0 = p1
@@ -105,33 +107,52 @@ allDiceRolls = [sum [x, y, z] | x <- baseRoll, y <- baseRoll, z <- baseRoll]
   where
     baseRoll = [1, 2, 3]
 
+type GameRes = (Int, Int)
+
+type GameCache = Map GameState (Int, Int)
+
 getAllNewStates :: GameState -> [GameState]
 getAllNewStates (rollNum, pMap) = map (\roll -> (newRoll, adjustPlayer pMap rollNum (movePlayer roll))) allDiceRolls
   where
     newRoll = (rollNum + 1) `mod` 2
 
--- TODO: cache game state to win counts to short circut
-runGameP2 :: [GameState] -> (Int, Int) -> (Int, Int)
-runGameP2 [] res = res
-runGameP2 (curr@(rollNum, pMap) : xs) wins@(p1Win, p2Win) = case checkWinP2 pMap of
-  Just (0) -> runGameP2 xs (p1Win + 1, p2Win)
-  Just 1 -> runGameP2 xs (p1Win, p2Win + 1)
-  Just _ -> error "invalid winner"
-  Nothing -> traceShow ("all: ", length allStates) $ runGameP2 allStates wins
+addTups :: GameRes -> GameRes -> GameRes
+addTups (x, y) (u, v) = (x + u, y + v)
+
+runGameP2' :: GameCache -> [GameState] -> (GameRes, GameCache)
+runGameP2' c [] = ((0, 0), c)
+runGameP2' c (curr@(rollNum, pMap) : xs)
+  | Map.member curr c = let res = (Map.!) c curr in runOnStates xs res
+  | otherwise = case checkWinP2 pMap of
+    Just (0) -> runOnStates xs (1, 0) -- addTups (1, 0) (runGameP2' c xs)
+    Just 1 -> runOnStates xs (0, 1)
+    Just _ -> error "invalid winner"
+    Nothing -> runOnStates (newStates ++ xs) (0, 0)
   where
     newStates = getAllNewStates curr
-    allStates = newStates ++ xs
+    runOnState (accRes, cache) state =
+      let (res, newCache) = runGameP2' cache [state]
+       in (addTups accRes res, Map.insert state res newCache)
+    runOnStates :: [GameState] -> GameRes -> (GameRes, GameCache)
+    runOnStates states initRes = foldl' runOnState (initRes, c) states
 
 toPlayersP2 :: Players -> PlayersP2
 toPlayersP2 pMap = Players {p1 = get 0, p2 = get 1}
   where
     get num = (M.!) pMap num
 
+runGameP2 :: PlayersP2 -> GameRes
+runGameP2 players = res
+  where
+    (res, _) = runGameP2' Map.empty [(0, players)]
+
 part2 :: IO ()
 part2 = do
   input <- toPlayersP2 <$> readStarts
   print input
-  print $ runGameP2 [(0, input)] (0, 0)
+  let (res1, res2) = runGameP2 input
+  print (res1, res2)
+  print $ max res1 res2
   return ()
 
 dispatch :: [(Int, IO ())]
