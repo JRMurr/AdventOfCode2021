@@ -22,6 +22,7 @@ import qualified Day18.Mod as Day18 (dispatch)
 import qualified Day19.Mod as Day19 (dispatch)
 import qualified Day20.Mod as Day20 (dispatch)
 import qualified Day21.Mod as Day21 (dispatch)
+import qualified Day22.Mod as Day22 (dispatch)
 -- Add day import
 
 import System.Environment (getArgs)
@@ -51,7 +52,8 @@ dayMap =
     (18, Day18.dispatch),
     (19, Day19.dispatch),
     (20, Day20.dispatch),
-    (21, Day21.dispatch)
+    (21, Day21.dispatch),
+    (22, Day22.dispatch)
     -- Add day dispatch
   ]
 
