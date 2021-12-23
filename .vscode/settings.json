@@ -1,15 +1,23 @@
 {
     "nixEnvSelector.nixFile": "${workspaceRoot}/shell.nix",
-    "haskell.trace.client": "debug",
-    "haskell.trace.server": "messages",
     "files.exclude": {
         "_dayTemplate": true
     },
     "cSpell.words": [
         "fmap",
+        "gcost",
+        "gscore",
         "Hashable",
+        "hicol",
+        "hirow",
         "Ints",
+        "locol",
+        "lorow",
+        "maxx",
+        "maxy",
+        "miny",
         "Mults",
+        "Prio",
         "Thruple",
         "treeify",
         "trimap",

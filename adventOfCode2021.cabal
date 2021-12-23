@@ -26,6 +26,7 @@ executable adventOfCode2021
 
     -- Modules included in this executable, other than Main.
     other-modules:
+        Day23.Mod
         Day22.Mod
         Day21.Mod
         Day20.Mod
@@ -48,6 +49,7 @@ executable adventOfCode2021
         Day03.Mod
         Day02.Mod
         Day01.Mod
+        Utils.AStar
         Utils.Mod
         Utils.Coords
 

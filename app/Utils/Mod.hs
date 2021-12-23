@@ -27,6 +27,9 @@ readNormalInput day = readFile (printf "app/Day%02d/in" (read day :: Integer))
 readExampleInput :: String -> IO String
 readExampleInput day = readFile (printf "app/Day%02d/in.example" (read day :: Integer))
 
+readDayFile :: Int -> String -> IO String
+readDayFile day fName = readFile (printf "app/Day%02d/%s" day fName)
+
 -- | Get the input for the given day.
 --
 -- If a filename is provided in the command line that will be used as the
