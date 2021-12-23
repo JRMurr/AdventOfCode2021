@@ -71,11 +71,12 @@ getIntersection r1@(lo1, hi1) r2@(lo2, hi2) = if isValid then Just newRange else
   where
     getLowerBound axisFunc = axisFunc lo1 `max` axisFunc lo2
     getUpperBound axisFunc = axisFunc hi1 `min` axisFunc hi2
-    getBounds axisFunc =
-      let (b1, b2) = (getLowerBound axisFunc, getUpperBound axisFunc)
-       in (b1 `min` b2, b1 `max` b2)
+    getBounds axisFunc = (getLowerBound axisFunc, getUpperBound axisFunc)
+    -- let (b1, b2) = (getLowerBound axisFunc, getUpperBound axisFunc)
+    --  in (b1 `min` b2, b1 `max` b2)
     newRange@(lo, hi) = axisBoundsToRange [getBounds px, getBounds py, getBounds pz]
-    isValid = not ((hi1 == lo || hi2 == lo) && (lo1 == hi || lo2 == hi))
+    isValidAxis f = f lo <= f hi
+    isValid = all isValidAxis [px, py, pz]
 
 isLitStr :: String -> Bool
 isLitStr "on" = True
@@ -83,11 +84,10 @@ isLitStr "off" = False
 isLitStr _ = error "invalid lit"
 
 cuboidIntersection :: Cuboid -> Cuboid -> Maybe Cuboid
-cuboidIntersection (C _ False) (C _ False) = Nothing -- don't care
 cuboidIntersection (C r1 on1) (C r2 on2) = newCuboid <$> newRange
   where
     newRange = getIntersection r1 r2
-    newCuboid r = C r False -- even if both are on we will subtract this area to avoid a double count
+    newCuboid r = C r (not on1)
 
 cuboidArea :: Cuboid -> Int
 cuboidArea (C r on) = boolMul * area r
@@ -99,7 +99,7 @@ runSteps cubes = foldl reducer [head cubes] (tail cubes)
   where
     reducer acc c@(C _ isOn) = res
       where
-        intersections = acc ++ mapMaybe (cuboidIntersection c) acc
+        intersections = acc ++ mapMaybe (`cuboidIntersection` c) acc
         res = if isOn then c : intersections else intersections
 
 -- >>> parseAxis "x=-11..13"
@@ -128,10 +128,18 @@ parseCuboid s = C range (isLitStr litStr)
 getAllCuboids :: IO [Cuboid]
 getAllCuboids = map parseCuboid <$> readInputLines
 
+inStartArea :: Cuboid -> Bool
+inStartArea (C (lo, hi) _) = all checkBound [px, py, pz]
+  where
+    checkLo f = f lo >= -50
+    checkHi f = f hi <= 50
+    checkBound f = checkLo f && checkHi f
+
 part1 :: IO ()
 part1 = do
   input <- getAllCuboids
-  let tmp = runSteps input
+  let valid = filter inStartArea input
+  let tmp = runSteps valid
   -- print tmp
   -- print $ map cuboidArea tmp
   print $ sum $ map cuboidArea tmp
@@ -140,7 +148,8 @@ part1 = do
 part2 :: IO ()
 part2 = do
   input <- getAllCuboids
-  print "part2"
+  let tmp = runSteps input
+  print $ sum $ map cuboidArea tmp
   return ()
 
 dispatch :: [(Int, IO ())]
