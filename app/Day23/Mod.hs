@@ -77,8 +77,11 @@ isGoalRoom amp c = S.member c allowedRooms
 getGoalRooms :: Amphipod -> [Coord]
 getGoalRooms amp = S.elems $ S.filter (\(C _ col) -> col == roomCol amp) roomCoords
 
+-- roomCoords :: Set Coord
+-- roomCoords = S.fromList [C row col | row <- [2, 3], col <- [3, 5, 7, 9]]
+
 roomCoords :: Set Coord
-roomCoords = S.fromList [C row col | row <- [2, 3], col <- [3, 5, 7, 9]]
+roomCoords = S.fromList [C row col | row <- [2, 3, 4, 5], col <- [3, 5, 7, 9]]
 
 hallCoords :: Set Coord
 hallCoords = S.fromList [C 1 col | col <- [1 .. 12]]
@@ -253,10 +256,15 @@ part1 = do
   print $ callAStar input
   return ()
 
+-- breaking part 1 to do part 2
+
+readPart2 :: IO Burrow
+readPart2 = toBurrow . lines <$> readDayFile 23 "in.p2"
+
 part2 :: IO ()
 part2 = do
-  input <- readBurrow
-  print "part2"
+  input <- readPart2
+  print $ callAStar input
   return ()
 
 dispatch :: [(Int, IO ())]
