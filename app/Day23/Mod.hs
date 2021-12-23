@@ -131,7 +131,7 @@ getValidMovesFromRoom _ c | not (isRoomCoord c) = []
 getValidMovesFromRoom bMap c | not (checkIsAmp bMap c) = []
 getValidMovesFromRoom bMap c | checkIsAmp bMap (above c) = []
 getValidMovesFromRoom bMap c =
-  if isGoalRoom currAmp c
+  if isGoalRoom currAmp c && checkTileInMap (\t -> t == Amp currAmp || t == Wall) bMap (below c)
     then []
     else energies
   where
@@ -175,12 +175,12 @@ getValidMoves bMap = map (applyMove bMap) allMoves
     runGet f = concatMap (\c -> let res = f bMap c in map (c,) res) allPossibleOpen
     allMoves = concatMap runGet [getValidMovesFromRoom, getValidMovesFromHall]
 
-callAStar :: Burrow -> Burrow -> Int
-callAStar start goal = case res of
+callAStar :: Burrow -> Int
+callAStar start = case res of
   Just (i, _) -> i
   _ -> error "no valid path"
   where
-    isGoal x = x == goal
+    -- isGoal x = x == goal
     res = astarSearch start isGoal getValidMoves (const 0)
 
 drawBurrow :: Burrow -> String
@@ -189,29 +189,54 @@ drawBurrow = drawCoordsGen tileToChar Open
 debugMove :: Burrow -> Coord -> Coord -> Burrow
 debugMove bMap start end = let (res, _) = applyMove bMap (start, (end, 0)) in res
 
+isGoal :: Burrow -> Bool
+isGoal bMap = all isGoalAmp ampCoords
+  where
+    ampCoords = M.toList $ M.filter isAmpTile bMap
+    isGoalAmp (coord, Amp a) = isGoalRoom a coord
+
 debug :: Burrow -> IO ()
 debug input = do
   let (start, end) = (C 2 7, C 1 4)
   let tmp = debugMove input start end
   putStrLn $ drawBurrow tmp
   -- print $ getValidMovesFromHall tmp (C 2 5)
-  print $ getValidMovesFromRoom tmp (C 2 5)
+  -- print $ getValidMovesFromRoom tmp (C 2 5)
   let tmp2 = debugMove tmp (C 2 5) (C 1 6)
   putStrLn $ drawBurrow tmp2
-  print $ getValidMovesFromHall tmp2 (C 1 6)
+  -- print $ getValidMovesFromHall tmp2 (C 1 6)
   let tmp3 = debugMove tmp2 (C 1 6) (C 2 7)
   putStrLn $ drawBurrow tmp3
 
+  -- print $ M.filter isAmpTile tmp3
+  -- print $ getValidMovesFromRoom tmp3 (C 3 5)
+
   -- print $ getValidMovesFromHall tmp3 end
-  -- let tmp4 = debugMove tmp3 end (C 2 5)
-  -- putStrLn $ drawBurrow tmp4
+  let tmp4 = debugMove tmp3 (C 3 5) (C 1 6)
+  putStrLn $ drawBurrow tmp4
+
+  -- print $ getValidMovesFromHall tmp4 end
+  let tmp5 = debugMove tmp4 end (C 3 5)
+  putStrLn $ drawBurrow tmp5
+  -- print $ getValidMovesFromRoom tmp5 (C 2 3)
+
+  let tmp6 = debugMove tmp5 (C 2 3) (C 2 5)
+  putStrLn $ drawBurrow tmp6
+
+  print $ M.filter isAmpTile tmp6
+  print $ getValidMovesFromRoom tmp6 (C 2 9)
+
+  let tmp7 = debugMove tmp6 (C 2 9) (C 1 8)
+  putStrLn $ drawBurrow tmp7
+
+  print $ getValidMovesFromRoom tmp7 (C 3 9)
   return ()
 
 part1 :: IO ()
 part1 = do
   input <- readBurrow
   goal <- readGoal
-  test <- debug input
+  -- test <- debug input
   -- print $ M.filter isAmpTile goal
   -- print $ getValidMovesFromRoom input (C 2 7)
   -- putStrLn $ drawBurrow input
@@ -225,7 +250,7 @@ part1 = do
   -- print $ M.filter isAmpTile tmp
   -- print $ (M.!) tmp (below (C 1 5))
 
-  print $ callAStar input goal
+  print $ callAStar input
   return ()
 
 part2 :: IO ()
