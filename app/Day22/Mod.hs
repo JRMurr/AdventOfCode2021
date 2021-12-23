@@ -5,6 +5,8 @@ import qualified Data.HashMap.Strict as Map
 -- import Data.Ix
 import Data.List.Split (splitOn)
 -- import GHC.Arr
+
+import Data.Maybe
 import Utils.Mod
 
 data Point = P !Int !Int !Int
@@ -36,7 +38,7 @@ pz (P _ _ z) = z
 type Range = (Point, Point)
 
 -- lower bound, upper bound, isLit
-data Cuboid = C !Range !Bool deriving (Show)
+data Cuboid = C !Range !Bool deriving (Show, Eq)
 
 inRange :: Range -> Point -> Bool
 inRange (P lox loy loz, P hix hiy hiz) (P x y z) =
@@ -80,12 +82,32 @@ isLitStr "on" = True
 isLitStr "off" = False
 isLitStr _ = error "invalid lit"
 
--- >>> parseAxis "x=11..13"
--- (11,13)
+cuboidIntersection :: Cuboid -> Cuboid -> Maybe Cuboid
+cuboidIntersection (C _ False) (C _ False) = Nothing -- don't care
+cuboidIntersection (C r1 on1) (C r2 on2) = newCuboid <$> newRange
+  where
+    newRange = getIntersection r1 r2
+    newCuboid r = C r False -- even if both are on we will subtract this area to avoid a double count
+
+cuboidArea :: Cuboid -> Int
+cuboidArea (C r on) = boolMul * area r
+  where
+    boolMul = if on then 1 else -1
+
+runSteps :: [Cuboid] -> [Cuboid]
+runSteps cubes = foldl reducer [head cubes] (tail cubes)
+  where
+    reducer acc c@(C _ isOn) = res
+      where
+        intersections = acc ++ mapMaybe (cuboidIntersection c) acc
+        res = if isOn then c : intersections else intersections
+
+-- >>> parseAxis "x=-11..13"
+-- (-11,13)
 parseAxis :: String -> (Int, Int)
 parseAxis s = (low, high)
   where
-    rangeStr = dropWhile (not . isDigit) s
+    rangeStr = tail (dropWhile (/= '=') s)
     [low, high] = map read $ splitOn ".." rangeStr
 
 axisBoundsToRange :: [(Int, Int)] -> Range
@@ -109,7 +131,10 @@ getAllCuboids = map parseCuboid <$> readInputLines
 part1 :: IO ()
 part1 = do
   input <- getAllCuboids
-  print input
+  let tmp = runSteps input
+  -- print tmp
+  -- print $ map cuboidArea tmp
+  print $ sum $ map cuboidArea tmp
   return ()
 
 part2 :: IO ()
