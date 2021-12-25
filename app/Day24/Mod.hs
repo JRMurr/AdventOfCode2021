@@ -2,8 +2,10 @@ module Day24.Mod where
 
 import Data.Char (digitToInt)
 import Data.List
+import Data.List.Split
 import Data.Map (Map)
 import qualified Data.Map as M
+import Data.Maybe
 import Utils.Mod
 
 data Val = Lit Int | Var Char deriving (Show, Eq, Ord)
@@ -42,7 +44,8 @@ runOp f (r, inp) var v = (M.insert var fRes r, inp)
     fRes = f (getVal (Var var)) (getVal v)
 
 runExpr :: ProgState -> Expr -> ProgState
-runExpr (r, inp) (Inp v) = let newR = M.insert v (head inp) r in (newR, tail inp)
+-- runExpr (r, inp) (Inp v) = let newR = M.insert v (head inp) r in (newR, tail inp)
+runExpr (r, inp) (Inp v) = error "handle in find"
 runExpr s (Add a b) = runOp (+) s a b
 runExpr s (Mul a b) = runOp (*) s a b
 runExpr s (Div a b) = runOp div s a b
@@ -52,9 +55,17 @@ runExpr s (Eql a b) = runOp (\x y -> if x == y then 1 else 0) s a b
 runProg :: Prog -> [Int] -> ProgState
 runProg p inp = foldl' runExpr (M.empty, inp) p
 
-runProgTillInput :: Prog -> ProgState -> (Prog, ProgState)
-runProgTillInput ((Inp _) : xs) p = (xs, p)
-runProgTillInput (x : xs) p = let newP = runExpr p x in runProgTillInput xs newP
+-- runProgTillInput :: Prog -> ProgState -> (Prog, ProgState)
+-- runProgTillInput ((Inp _) : xs) p = (xs, p)
+-- runProgTillInput (x : xs) p = let newP = runExpr p x in runProgTillInput xs newP
+
+insertToProg :: ProgState -> Char -> Int -> ProgState
+insertToProg (r, inp) k v = let newR = M.insert k v r in (newR, v : inp)
+
+findMaxPlate :: Prog -> ProgState -> Maybe [Int]
+findMaxPlate [] (regs, inp) = let res = M.lookup 'z' regs in if res == Just 0 then Just inp else Nothing
+findMaxPlate ((Inp c) : xs) p = listToMaybe $ mapMaybe (findMaxPlate xs . insertToProg p c) [9, 8 .. 1]
+findMaxPlate (x : xs) p = findMaxPlate xs (runExpr p x)
 
 -- TODO: either split the prog on inp commands to allow caching of results for each digit
 -- or do some branching stuff
@@ -81,6 +92,11 @@ runProgTillInput (x : xs) p = let newP = runExpr p x in runProgTillInput xs newP
 part1 :: IO ()
 part1 = do
   input <- getProg
+  -- Sorta repeated block of same 18 instructions with diff constants
+
+  let tmp = chunksOf 18 input
+  print $ length tmp
+  -- print $ findMaxPlate input (M.empty, [])
   -- print $ find (checkPlate input) getValidPlates
   return ()
 
