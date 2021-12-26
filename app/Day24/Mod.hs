@@ -1,11 +1,16 @@
+{-# LANGUAGE BlockArguments #-}
+
 module Day24.Mod where
 
-import Data.Char (digitToInt)
+import Control.Monad
+import Control.Monad.State
+import Data.Char (digitToInt, intToDigit)
 import Data.List
 import Data.List.Split
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe
+import qualified Data.Set as S
 import Utils.Mod
 
 data Val = Lit Int | Var Char deriving (Show, Eq, Ord)
@@ -59,51 +64,60 @@ runProg p inp = foldl' runExpr (M.empty, inp) p
 -- runProgTillInput ((Inp _) : xs) p = (xs, p)
 -- runProgTillInput (x : xs) p = let newP = runExpr p x in runProgTillInput xs newP
 
-insertToProg :: ProgState -> Char -> Int -> ProgState
-insertToProg (r, inp) k v = let newR = M.insert k v r in (newR, v : inp)
-
-findMaxPlate :: Prog -> ProgState -> Maybe [Int]
-findMaxPlate [] (regs, inp) = let res = M.lookup 'z' regs in if res == Just 0 then Just inp else Nothing
-findMaxPlate ((Inp c) : xs) p = listToMaybe $ mapMaybe (findMaxPlate xs . insertToProg p c) [9, 8 .. 1]
-findMaxPlate (x : xs) p = findMaxPlate xs (runExpr p x)
-
--- TODO: either split the prog on inp commands to allow caching of results for each digit
--- or do some branching stuff
-
 -- digits :: Int -> [Int]
 -- digits = map digitToInt . show
 
--- noZeros :: [Int] -> Bool
--- noZeros x = 0 `notElem` x
+-- (a,b,c)
+type StepVars = (Int, Int, Int)
 
--- getValidPlates :: [[Int]]
--- getValidPlates = filter noZeros (map digits [ub, (ub -1) .. lb])
---   where
---     getBound :: String -> Int
---     getBound string = read $ concat $ replicate 14 string
---     lb = getBound "1"
---     ub = getBound "9"
+toStep :: [Expr] -> StepVars
+toStep x = (a, b, c)
+  where
+    Div 'z' (Lit a) = x !! 4
+    Add 'x' (Lit b) = x !! 5
+    Add 'y' (Lit c) = x !! 15
 
--- checkPlate :: Prog -> [Int] -> Bool
--- checkPlate p inp = M.lookup 'z' res == Just 0
---   where
---     (res, _) = runProg p inp
+getSteps :: IO [StepVars]
+getSteps = map toStep . chunksOf 18 <$> getProg
+
+runStep :: StepVars -> Int -> Int -> Int
+runStep (a, b, c) w z = if x /= w then (z' * 26) + (w + c) else z'
+  where
+    x = (z `mod` 26) + b
+    z' = z `quot` a
+
+solve :: [Int] -> Int -> [StepVars] -> State (S.Set (Int, Int)) [[Int]]
+solve ws z (s : steps) = do
+  cache <- get
+  if S.member (z, length steps) cache -- since we go over all possible digits in each call if we have seen z with this many steps remaining we can exit
+    then pure []
+    else do
+      result <- concat <$> traverse recCall ws
+      modify (S.insert (z, length steps))
+      pure result
+  where
+    recCall w =
+      let z' = runStep s w z
+       in if null steps
+            then pure [[w] | z' == 0]
+            else map (w :) <$> solve ws z' steps
+
+run :: [StepVars] -> [Int] -> String
+run steps ws = map intToDigit $ head $ evalState (solve ws 0 steps) S.empty
 
 part1 :: IO ()
 part1 = do
-  input <- getProg
-  -- Sorta repeated block of same 18 instructions with diff constants
+  input <- getSteps
 
-  let tmp = chunksOf 18 input
-  print $ length tmp
-  -- print $ findMaxPlate input (M.empty, [])
-  -- print $ find (checkPlate input) getValidPlates
+  putStrLn $ run input [9, 8 .. 1]
+
   return ()
 
 part2 :: IO ()
 part2 = do
-  input <- getProg
-  print "part2"
+  input <- getSteps
+  putStrLn $ run input [1 .. 9]
+
   return ()
 
 dispatch :: [(Int, IO ())]
